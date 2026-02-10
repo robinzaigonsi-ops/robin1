@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>头戴监测设备与气传导耳机核心人群分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #FFFFFF;
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            overflow: hidden;
+            position: relative;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.08);
+        }
+        .highlight-gradient-blue {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.05));
+        }
+        .highlight-gradient-green {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0), rgba(16, 185, 129, 0.05));
+        }
+        .highlight-gradient-purple {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0), rgba(139, 92, 246, 0.05));
+        }
+        .highlight-gradient-orange {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0), rgba(249, 115, 22, 0.05));
+        }
+        .highlight-gradient-red {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0), rgba(239, 68, 68, 0.05));
+        }
+        .highlight-gradient-teal {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0), rgba(20, 184, 166, 0.05));
+        }
+        .priority-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .priority-high {
+            background-color: #EF4444;
+        }
+        .priority-medium {
+            background-color: #F97316;
+        }
+        .priority-low {
+            background-color: #10B981;
+        }
+        /* 新增：人群卡片交互样式 */
+        .persona-card {
+            cursor: pointer;
+        }
+        .persona-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+        .persona-details.active {
+            max-height: 5000px;
+        }
+        .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+        .chevron-icon.active {
+            transform: rotate(180deg);
+        }
+        /* 新增：表格样式优化 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        .data-table th {
+            background-color: #F9FAFB;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #F3F4F6;
+        }
+        .data-table tr:hover {
+            background-color: #F9FAFB;
+        }
+        /* 新增：标签样式 */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        /* 新增：溯源链接样式 */
+        .source-link {
+            font-size: 11px;
+            color: #6366F1;
+            text-decoration: underline;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+            <!-- 标题卡片 -->
+            <div class="card md:col-span-4 p-8 flex flex-col justify-center items-center text-center">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-blue"></div>
+                <div class="relative z-10">
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">头戴监测设备与气传导耳机</h1>
+                    <h2 class="text-2xl md:text-3xl font-bold text-blue-600 mb-6">核心人群分析报告</h2>
+                    <p class="text-lg text-gray-600 max-w-3xl">基于全球市场数据和用户画像，深入分析六类核心人群的需求特征、痛点及解决方案，重点关注运动场景下的心率/血氧监测、实时交互需求</p>
+                </div>
+            </div>
+
+            <!-- 核心人群优先级排序（整合两个文件的核心人群） -->
+            <div class="card md:col-span-4 p-6">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-green"></div>
+                <div class="relative z-10">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fa-solid fa-bullseye-arrow text-green-500 mr-3"></i>
+                        核心人群优先级排序（全球市场）
+                    </h3>
+                    <!-- 人群优先级图表 -->
+                    <div class="h-80 mb-6">
+                        <canvas id="personaPriorityChart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="flex items-center p-4 bg-red-50 rounded-lg">
+                            <span class="priority-dot priority-high"></span>
+                            <span class="font-semibold text-gray-700">专业/进阶耐力运动爱好者</span>
+                            <span class="ml-auto text-sm font-bold text-red-600">★★★★★</span>
+                        </div>
+                        <div class="flex items-center p-4 bg-orange-50 rounded-lg">
+                            <span class="priority-dot priority-high"></span>
+                            <span class="font-semibold text-gray-700">大众户外运动爱好者</span>
+                            <span class="ml-auto text-sm font-bold text-orange-600">★★★★☆</span>
+                        </div>
+                        <div class="flex items-center p-4 bg-teal-50 rounded-lg">
+                            <span class="priority-dot priority-high"></span>
+                            <span class="font-semibold text-gray-700">中老年健康运动人群</span>
+                            <span class="ml-auto text-sm font-bold text-teal-600">★★★★☆</span>
+                        </div>
+                        <div class="flex items-center p-4 bg-blue-50 rounded-lg">
+                            <span class="priority-dot priority-high"></span>
+                            <span class="font-semibold text-gray-700">军警及应急救援人员</span>
+                            <span class="ml-auto text-sm font-bold text-blue-600">★★★★☆</span>
+                        </div>
+                        <div class="flex items-center p-4 bg-purple-50 rounded-lg">
+                            <span class="priority-dot priority-medium"></span>
+                            <span class="font-semibold text-gray-700">企业高管及职场精英</span>
+                            <span class="ml-auto text-sm font-bold text-purple-600">★★★☆☆</span>
+                        </div>
+                        <div class="flex items-center p-4 bg-green-50 rounded-lg">
+                            <span class="priority-dot priority-medium"></span>
+                            <span class="font-semibold text-gray-700">慢性病管理人群</span>
+                            <span class="ml-auto text-sm font-bold text-green-600">★★★☆☆</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人群1：专业/进阶耐力运动爱好者（可展开详情） -->
+            <div class="card md:col-span-4 p-6 persona-card" id="persona1">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-red"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-person-running text-red-500 mr-3"></i>
+                            专业/进阶耐力运动爱好者
+                            <span class="ml-3 bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-semibold">第一核心 ★★★★★</span>
+                        </h3>
+                        <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron1"></i>
+                    </div>
+                    <!-- 人群详情（默认折叠） -->
+                    <div class="persona-details" id="details1">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <!-- 基础数据 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">核心基础数据</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex justify-between">
+                                        <span>全球市场规模</span>
+                                        <span class="font-bold text-red-600">1800万+
+                                            <a href="https://www.statista.com/statistics/1283452/global-sports-wearable-devices-market-size/" target="_blank" class="source-link">【数据溯源】</a>
+                                        </span>
+                                    </li>
+                                    <li class="flex justify-between"><span>消费价格区间</span><span class="font-bold text-red-600">2000-5000元</span></li>
+
+                                    <li class="flex justify-between"><span>运动频率</span><span class="font-bold text-red-600">≥3次/周，单次≥1.5小时</span></li>
+                                    <li class="flex justify-between"><span>核心监测需求</span><span class="font-bold text-red-600">心率/血氧/运动负荷</span></li>
+                                </ul>
+                            </div>
+                            <!-- 核心筛选条件 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">精准筛选条件</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-red-500 mr-2"></i>月均可支配收入≥8000元（全球折算）</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-red-500 mr-2"></i>需实时语音反馈，拒绝数据滞后</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-red-500 mr-2"></i>适配高海拔/涉水等复杂运动环境</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-red-500 mr-2"></i>注重数据精准度与设备防脱落</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 核心使用场景 -->
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-700 mb-3">核心使用场景与解决方案</h4>
+                            <table class="data-table bg-white">
+                                <thead>
+                                    <tr>
+                                        <th>使用场景</th>
+                                        <th>核心痛点</th>
+                                        <th>设备解决方式</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>马拉松/越野跑（42km+）</td>
+                                        <td>手动看设备影响节奏、腕式数据漂移</td>
+                                        <td>气传导实时播报心率/配速，头戴监测更精准</td>
+                                    </tr>
+                                    <tr>
+                                        <td>铁人三项（游泳+骑行+跑步）</td>
+                                        <td>设备进水、换项佩戴繁琐</td>
+                                        <td>IP68防水，轻量化设计无需拆卸</td>
+                                    </tr>
+                                    <tr>
+                                        <td>高海拔骑行/徒步</td>
+                                        <td>血氧过低无预警、续航不足</td>
+                                        <td>语音预警血氧，超长续航≥12小时</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 核心功能匹配 -->
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">核心功能匹配（头戴+气传导）</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-3 bg-red-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">健康监测</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 心率/血氧实时精准监测（每30s语音播报）</li>
+                                        <li>• 运动负荷超标语音预警</li>
+                                        <li>• 运动后恢复状态语音建议</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-red-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">气传导耳机</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 漏音消除，保障私密性</li>
+                                        <li>• 开放式设计，环境感知安全</li>
+                                        <li>• 语音指令（无需手动操作）</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-red-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">硬件适配</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• IP68防水防尘（适配涉水/沙尘）</li>
+                                        <li>• 人体工学设计（剧烈运动不滑落）</li>
+                                        <li>• 轻量化≤50g，无佩戴负担</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-red-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">运动记录</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 自动识别运动模式（跑步/骑行/游泳）</li>
+                                        <li>• 配速/距离实时语音播报</li>
+                                        <li>• 数据实时同步，避免丢失</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人群2：大众户外运动爱好者 -->
+            <div class="card md:col-span-4 p-6 persona-card" id="persona2">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-orange"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-hiking text-orange-500 mr-3"></i>
+                            大众户外运动爱好者
+                            <span class="ml-3 bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full font-semibold">基础核心 ★★★★☆</span>
+                        </h3>
+                        <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron2"></i>
+                    </div>
+                    <div class="persona-details" id="details2">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="p-4 bg-orange-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">核心基础数据</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex justify-between">
+                                        <span>全球市场规模</span>
+                                        <span class="font-bold text-orange-600">9600万+
+                                            <a href="https://www.idc.com/promo/smartwearable/devices-market-share" target="_blank" class="source-link">【数据溯源】</a>
+                                        </span>
+                                    </li>
+                                    <li class="flex justify-between"><span>消费价格区间</span><span class="font-bold text-orange-600">1500-3000元</span></li>
+
+                                    <li class="flex justify-between"><span>运动频率</span><span class="font-bold text-orange-600">≥2次/周，单次0.5-1.5小时</span></li>
+                                    <li class="flex justify-between"><span>核心监测需求</span><span class="font-bold text-orange-600">基础心率/血氧+音乐陪伴</span></li>
+                                </ul>
+                            </div>
+                            <div class="p-4 bg-orange-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">精准筛选条件</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-orange-500 mr-2"></i>月均可支配收入≥5000元（全球折算）</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-orange-500 mr-2"></i>设备操作简单、佩戴舒适</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-orange-500 mr-2"></i>适配城市/近郊轻运动环境</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-orange-500 mr-2"></i>注重多功能合一（监测+听歌）</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-700 mb-3">核心使用场景与解决方案</h4>
+                            <table class="data-table bg-white">
+                                <thead>
+                                    <tr>
+                                        <th>使用场景</th>
+                                        <th>核心痛点</th>
+                                        <th>设备解决方式</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>城市休闲跑步/夜跑（3-10km）</td>
+                                        <td>入耳式耳机不安全、雨天设备进水</td>
+                                        <td>气传导开放式设计，IP68防水</td>
+                                    </tr>
+                                    <tr>
+                                        <td>城市/近郊骑行（10-30km）</td>
+                                        <td>手动看设备危险、颠簸易位移</td>
+                                        <td>语音播报数据，人体工学防位移</td>
+                                    </tr>
+                                    <tr>
+                                        <td>近郊轻徒步/露营</td>
+                                        <td>多设备佩戴繁琐、续航不足</td>
+                                        <td>一站式功能，超长续航≥12小时</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">核心功能匹配（头戴+气传导）</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-3 bg-orange-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">健康监测</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 基础心率/血氧监测，异常语音预警</li>
+                                        <li>• 运动消耗/步数语音查询</li>
+                                        <li>• 运动目标完成语音提醒</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-orange-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">气传导耳机</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 高清音质+漏音消除</li>
+                                        <li>• 简易语音指令（播放/查询）</li>
+                                        <li>• 高清免提通话，运动不中断</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-orange-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">硬件适配</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• IP68防水防尘（雨天/出汗）</li>
+                                        <li>• 亲肤透气材质，出汗不黏腻</li>
+                                        <li>• 多配色选择，兼顾颜值</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-orange-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">运动记录</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 自动记录距离/时长/卡路里</li>
+                                        <li>• 一键切换运动模式</li>
+                                        <li>• 数据一键分享至社交平台</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人群3：中老年健康运动人群 -->
+            <div class="card md:col-span-4 p-6 persona-card" id="persona3">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-teal"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-person-cane text-teal-500 mr-3"></i>
+                            中老年健康运动人群
+                            <span class="ml-3 bg-teal-100 text-teal-600 text-xs px-2 py-1 rounded-full font-semibold">特色核心 ★★★★☆</span>
+                        </h3>
+                        <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron3"></i>
+                    </div>
+                    <div class="persona-details" id="details3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="p-4 bg-teal-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">核心基础数据</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex justify-between">
+                                        <span>全球市场规模</span>
+                                        <span class="font-bold text-teal-600">2280万+
+                                            <a href="https://www.grandviewresearch.com/industry-analysis/elderly-wearable-technology-market" target="_blank" class="source-link">【数据溯源】</a>
+                                        </span>
+                                    </li>
+                                    <li class="flex justify-between"><span>消费价格区间</span><span class="font-bold text-teal-600">1500-3000元</span></li>
+
+                                    <li class="flex justify-between"><span>运动频率</span><span class="font-bold text-teal-600">≥3次/周，单次0.5-1小时</span></li>
+                                    <li class="flex justify-between"><span>核心监测需求</span><span class="font-bold text-teal-600">心率/血氧+安全预警</span></li>
+                                </ul>
+                            </div>
+                            <div class="p-4 bg-teal-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">精准筛选条件</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-teal-500 mr-2"></i>月均可支配收入≥4000元（全球折算）</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-teal-500 mr-2"></i>设备一键启动、操作简单</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-teal-500 mr-2"></i>适配社区/公园轻运动环境</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-teal-500 mr-2"></i>注重安全预警、防丢失</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-700 mb-3">核心使用场景与解决方案</h4>
+                            <table class="data-table bg-white">
+                                <thead>
+                                    <tr>
+                                        <th>使用场景</th>
+                                        <th>核心痛点</th>
+                                        <th>设备解决方式</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>公园健走/慢跑（3-5km）</td>
+                                        <td>操作繁琐、心率过高无预警</td>
+                                        <td>一键启动，心率/血氧强语音预警</td>
+                                    </tr>
+                                    <tr>
+                                        <td>社区广场舞/太极</td>
+                                        <td>手持音响不便、出汗黏腻</td>
+                                        <td>气传导播放音乐，抗菌透气材质</td>
+                                    </tr>
+                                    <tr>
+                                        <td>中老年休闲骑行</td>
+                                        <td>操作不便、易丢失设备</td>
+                                        <td>语音交互，防丢失挂绳+定位</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">核心功能匹配（头戴+气传导）</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-3 bg-teal-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">健康监测</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 24小时心率/血氧监测，强语音预警</li>
+                                        <li>• 轻运动模式自动识别</li>
+                                        <li>• 健康数据语音播报（无需看屏）</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-teal-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">气传导耳机</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 极简语音指令（支持方言）</li>
+                                        <li>• 大音量音乐播放（适配广场舞）</li>
+                                        <li>• 一键接听/挂断电话</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-teal-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">硬件适配</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 超大一键启动键，易按压</li>
+                                        <li>• 医用级抗菌透气材质</li>
+                                        <li>• 超长续航≥15小时，磁吸充电</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-teal-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">安全功能</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 跌倒轻预警，语音求助</li>
+                                        <li>• 防丢失挂绳+手机定位</li>
+                                        <li>• 子女远程设置运动目标</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人群4：军警及应急救援人员 -->
+            <div class="card md:col-span-4 p-6 persona-card" id="persona4">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-blue"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-shield text-blue-500 mr-3"></i>
+                            军警及应急救援人员
+                            <span class="ml-3 bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-semibold">高优先级 ★★★★☆</span>
+                        </h3>
+                        <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron4"></i>
+                    </div>
+                    <div class="persona-details" id="details4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">核心基础数据</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex justify-between">
+                                        <span>全球市场规模</span>
+                                        <span class="font-bold text-blue-600">800万+
+                                            <a href="https://www.marketsandmarkets.com/Market-Reports/tactical-wearables-market-108501102.html" target="_blank" class="source-link">【数据溯源】</a>
+                                        </span>
+                                    </li>
+                                    <li class="flex justify-between"><span>消费价格区间</span><span class="font-bold text-blue-600">3000-5000元</span></li>
+                                    <li class="flex justify-between"><span>需求强度</span><span class="font-bold text-blue-600">★★★★★</span></li>
+                                    <li class="flex justify-between"><span>核心监测需求</span><span class="font-bold text-blue-600">生命体征监测、环境安全预警</span></li>
+                                </ul>
+                            </div>
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">核心痛点</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-center"><i class="fa-solid fa-circle-exclamation text-blue-500 mr-2"></i>生命体征监测</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-circle-exclamation text-blue-500 mr-2"></i>环境安全预警</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-circle-exclamation text-blue-500 mr-2"></i>任务状态管理</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-circle-exclamation text-blue-500 mr-2"></i>团队协作通信</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">核心功能匹配（头戴+气传导）</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">健康监测</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 实时健康数据监控</li>
+                                        <li>• 生命体征异常预警</li>
+                                        <li>• 高强度任务下的身体状态评估</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">气传导耳机</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 战术指令语音交互</li>
+                                        <li>• 环境噪音过滤</li>
+                                        <li>• 团队实时通信</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">硬件适配</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 军工级防护，IP68防水防尘</li>
+                                        <li>• 轻量化设计，不影响行动</li>
+                                        <li>• 防脱落设计，适合高强度动作</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人群5：企业高管及职场精英 -->
+            <div class="card md:col-span-4 p-6 persona-card" id="persona5">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-purple"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-briefcase text-purple-500 mr-3"></i>
+                            企业高管及职场精英
+                            <span class="ml-3 bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full font-semibold">中优先级 ★★★☆☆</span>
+                        </h3>
+                        <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron5"></i>
+                    </div>
+                    <div class="persona-details" id="details5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="p-4 bg-purple-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">核心基础数据</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex justify-between">
+                                        <span>全球市场规模</span>
+                                        <span class="font-bold text-purple-600">1500万+
+                                            <a href="https://www.statista.com/statistics/1320495/global-luxury-wearable-devices-market-size/" target="_blank" class="source-link">【数据溯源】</a>
+                                        </span>
+                                    </li>
+                                    <li class="flex justify-between"><span>消费价格区间</span><span class="font-bold text-purple-600">2500-4000元</span></li>
+
+                                    <li class="flex justify-between"><span>运动频率</span><span class="font-bold text-purple-600">1-2次/周，单次0.5-1小时</span></li>
+                                    <li class="flex justify-between"><span>核心监测需求</span><span class="font-bold text-purple-600">压力监测+基础健康数据</span></li>
+                                </ul>
+                            </div>
+                            <div class="p-4 bg-purple-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">精准筛选条件</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-purple-500 mr-2"></i>月均可支配收入≥10000元（全球折算）</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-purple-500 mr-2"></i>设备商务简约设计、易携带</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-purple-500 mr-2"></i>适配健身房/居家轻运动场景</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-purple-500 mr-2"></i>注重数据隐私、多设备兼容</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-700 mb-3">核心使用场景与解决方案</h4>
+                            <table class="data-table bg-white">
+                                <thead>
+                                    <tr>
+                                        <th>使用场景</th>
+                                        <th>核心痛点</th>
+                                        <th>设备解决方式</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>健身房私教训练（1小时/次）</td>
+                                        <td>设备与健身器材不兼容、数据不互通</td>
+                                        <td>多设备兼容，实时数据同步教练端</td>
+                                    </tr>
+                                    <tr>
+                                        <td>居家瑜伽/普拉提</td>
+                                        <td>需要静音环境、数据记录不便捷</td>
+                                        <td>气传导静音模式，一键记录运动数据</td>
+                                    </tr>
+                                    <tr>
+                                        <td>商务差旅轻运动</td>
+                                        <td>设备携带繁琐、续航短</td>
+                                        <td>折叠轻量化设计，超长续航≥10小时</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">核心功能匹配（头戴+气传导）</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-3 bg-purple-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">健康监测</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 压力指数监测，语音放松建议</li>
+                                        <li>• 睡眠质量分析，晨起语音播报</li>
+                                        <li>• 基础心率/血氧监测，异常预警</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-purple-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">气传导耳机</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 商务级高清通话，降噪处理</li>
+                                        <li>• 语音日程提醒，联动办公软件</li>
+                                        <li>• 简约商务设计，适配正装场景</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-purple-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">硬件适配</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 折叠便携设计，适配商务出行</li>
+                                        <li>• 快充技术（15分钟充至80%）</li>
+                                        <li>• 隐私加密，数据本地存储可选</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-purple-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">办公联动</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 语音收发邮件/消息，免手动操作</li>
+                                        <li>• 会议模式（屏蔽运动监测干扰）</li>
+                                        <li>• 多终端同步（手机/电脑/平板）</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人群6：慢性病管理人群 -->
+            <div class="card md:col-span-4 p-6 persona-card" id="persona6">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-green"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-pills text-green-500 mr-3"></i>
+                            慢性病管理人群
+                            <span class="ml-3 bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full font-semibold">中优先级 ★★★☆☆</span>
+                        </h3>
+                        <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron6"></i>
+                    </div>
+                    <div class="persona-details" id="details6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="p-4 bg-green-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">核心基础数据</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex justify-between">
+                                        <span>全球市场规模</span>
+                                        <span class="font-bold text-green-600">1900万+
+                                            <a href="https://www.fortunebusinessinsights.com/healthcare-technology/wearable-medical-devices-market-108817" target="_blank" class="source-link">【数据溯源】</a>
+                                        </span>
+                                    </li>
+                                    <li class="flex justify-between"><span>消费价格区间</span><span class="font-bold text-green-600">2000-3500元</span></li>
+
+                                    <li class="flex justify-between"><span>运动频率</span><span class="font-bold text-green-600">≥3次/周，单次0.5小时左右</span></li>
+                                    <li class="flex justify-between"><span>核心监测需求</span><span class="font-bold text-green-600">精准心率/血氧+运动负荷控制</span></li>
+                                </ul>
+                            </div>
+                            <div class="p-4 bg-green-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-700 mb-3">精准筛选条件</h4>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-green-500 mr-2"></i>月均可支配收入≥5000元（全球折算）</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-green-500 mr-2"></i>设备医疗级精准度、操作简易</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-green-500 mr-2"></i>适配居家/社区康复运动场景</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check-circle text-green-500 mr-2"></i>注重数据可导出、对接医疗平台</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-700 mb-3">核心使用场景与解决方案</h4>
+                            <table class="data-table bg-white">
+                                <thead>
+                                    <tr>
+                                        <th>使用场景</th>
+                                        <th>核心痛点</th>
+                                        <th>设备解决方式</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>居家康复轻运动</td>
+                                        <td>运动强度难把控、数据不精准</td>
+                                        <td>医疗级监测，运动负荷语音管控</td>
+                                    </tr>
+                                    <tr>
+                                        <td>社区慢病管理运动课</td>
+                                        <td>数据手动记录繁琐、无实时预警</td>
+                                        <td>数据自动记录，异常实时预警</td>
+                                    </tr>
+                                    <tr>
+                                        <td>日常慢走/轻活动</td>
+                                        <td>忘记监测、数据无法同步医生</td>
+                                        <td>自动监测，数据一键导出至医疗平台</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">核心功能匹配（头戴+气传导）</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-3 bg-green-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">健康监测</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 医疗级心率/血氧监测，精准度±1%</li>
+                                        <li>• 运动负荷超阈值强语音预警</li>
+                                        <li>• 每日/每周数据报告自动生成</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-green-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">气传导耳机</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 医嘱语音提醒（吃药/运动）</li>
+                                        <li>• 低音量清晰播报，保护听力</li>
+                                        <li>• 一键呼叫医生/家属</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-green-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">硬件适配</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 医疗级认证，数据精准可溯源</li>
+                                        <li>• 超长续航≥18小时，无需频繁充电</li>
+                                        <li>• 亲肤抗过敏材质，长期佩戴无不适</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-green-50 rounded-lg">
+                                    <h5 class="font-medium text-gray-700 mb-2">医疗联动</h5>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• 数据对接主流慢病管理平台</li>
+                                        <li>• 医生远程查看实时数据</li>
+                                        <li>• 异常数据自动推送至医护端</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    <!-- 材质对比分析 -->
+    <div class="card md:col-span-4 p-6 persona-card" id="persona-material">
+        <div class="absolute top-0 left-0 w-full h-full highlight-gradient-blue"></div>
+        <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fa-solid fa-materials-texture text-blue-500 mr-3"></i>
+                    头戴设备主体材质对比分析
+                    <span class="ml-3 bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-semibold">核心对比 ★★★★★</span>
+                </h3>
+                <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron-material"></i>
+            </div>
+            <!-- 材质对比分析内容 -->
+            <div class="persona-details" id="details-material">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 布料卡片 -->
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-3">布料</h4>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">数据监测优劣：</p>
+                                <div class="pl-4">
+                                    <p class="text-green-600">✓ 弹性贴合皮肤，传感器不易移位，数据采集稳定</p>
+                                    <p class="text-green-600">✓ 透气性佳，减少皮肤出汗潮湿对传感器信号的干扰</p>
+                                    <p class="text-red-600">✗ 多次水洗后弹性下降（采用可换形式），可能影响传感器贴合度</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">运动佩戴优劣：</p>
+                                <div class="pl-4">
+                                    <p class="text-green-600">✓ 长时间佩戴无压迫感，重量最低</p>
+                                    <p class="text-green-600">✓ 吸汗干爽，避免运动时闷热黏腻</p>
+                                    <p class="text-red-600">✗ 剧烈运动（如越野跑）时，纯布料易拉伸变形，需搭配调节结构</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">适配场景与维护：</p>
+                                <div class="pl-4">
+                                    <p>适配场景：长距离跑步、骑行、中老年日常健走</p>
+                                    <p>耐用性与维护：可直接机洗，无需特殊护理</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">结论：</p>
+                                <div class="pl-4">
+                                    <p class="text-green-600 font-semibold">✓ 单从监测稳定性和运动佩戴，布料表现优秀</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 硅胶卡片 -->
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-3">硅胶</h4>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">数据监测优劣：</p>
+                                <div class="pl-4">
+                                    <p class="text-green-600">✓ 亲肤且无间隙贴合皮肤，传感器信号传输稳定，监测精准度高</p>
+                                    <p class="text-green-600">✓ 防水性强，游泳训练时不会因进水影响数据采集</p>
+                                    <p class="text-red-600">✗ 材质偏硬，大面积使用易压迫皮肤，导致局部血液循环不畅</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">运动佩戴优劣：</p>
+                                <div class="pl-4">
+                                    <p class="text-green-600">✓ 防水汗（游泳场景），耐用性强（高强度训练），不易变形</p>
+                                    <p class="text-red-600">✗ 透气性差，长时间佩戴易闷热</p>
+                                    <p class="text-red-600">✗ 重量较大（50-80g），对颈椎有负担</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">适配场景与维护：</p>
+                                <div class="pl-4">
+                                    <p>适配场景：专业游泳训练、短时间高强度间歇训练</p>
+                                    <p>耐用性与维护：需定期用酒精棉片擦拭，防止汗渍残留硬化，汗渍残留易滋生细菌</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">结论：</p>
+                                <div class="pl-4">
+                                    <p>长期佩戴/运动流汗（>2小时）易在接触区形成闷热潮湿环境，引发皮肤泛红，小面积长期压迫会导致局部血液循环不畅，出现轻微压痕</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 塑胶卡片 -->
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-3">塑胶（软胶）</h4>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">数据监测优劣：</p>
+                                <div class="pl-4">
+                                    <p class="text-green-600">✓ 耐高低温，极端环境下传感器性能不受影响</p>
+                                    <p class="text-red-600">✗ 材质坚硬，无法随人体动作贴合皮肤，易出现监测盲区</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">运动佩戴优劣：</p>
+                                <div class="pl-4">
+                                    <p class="text-green-600">✓ 支撑性强，可作为调节结构（如旋钮、卡扣）的载体</p>
+                                    <p class="text-green-600">✓ 防水耐磨，使用寿命长</p>
+                                    <p class="text-red-600">✗ 重量大，透气性极差，完全不适合大面积接触皮肤；运动时易产生异响</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">适配场景与维护：</p>
+                                <div class="pl-4">
+                                    <p>适配场景：仅作为头带调节部件、传感器外壳，不可作为主体材质</p>
+                                    <p>耐用性与维护：无需特殊维护，但易老化发黄</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-700 mb-1">结论：</p>
+                                <div class="pl-4">
+                                    <p class="text-red-600 font-semibold">✗ 完全不具备佩戴舒适性，坚硬材质无法贴合皮肤，会直接导致监测数据失真</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 高风险作业人群监测需求分析 -->
+    <div class="card md:col-span-4 p-6 persona-card" id="persona-high-risk">
+        <div class="absolute top-0 left-0 w-full h-full highlight-gradient-red"></div>
+        <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fa-solid fa-exclamation-triangle text-red-500 mr-3"></i>
+                    高风险作业人群监测需求分析
+                    <span class="ml-3 bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-semibold">高优先级 ★★★★☆</span>
+                </h3>
+                <i class="fa-solid fa-chevron-down chevron-icon text-gray-500" id="chevron-high-risk"></i>
+            </div>
+            <!-- 高风险作业人群监测需求分析内容 -->
+            <div class="persona-details" id="details-high-risk">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 折叠面板1：高风险作业人群 -->
+                    <div class="w-full">
+                        <h4 class="font-semibold text-gray-700 mb-4">高风险作业人群</h4>
+                        <div class="grid grid-cols-1 gap-4">
+                            <!-- 仓储分拣卡片 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3">仓储分拣</h5>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">场景备注</p>
+                                        <p>高强度、长时间作业（如连续8小时分拣、长速降等）；心率监测可有效预警疲劳，降低工伤风险。</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">核心功能匹配</p>
+                                        <p>AR仓储指导<br>长期作业：监测疲劳状态，预警疲劳，降低工伤风险</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性依据</p>
+                                        <p>87%的分拣员存在腰/膝劳损，65%有睡眠障碍，40%+存在高血压/心血管风险，这些慢性问题最终会转化为急性事件</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性</p>
+                                        <p>***（有价值但非必需）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">市场容量</p>
+                                        <p>高强度筛选（日均≥10小时、重体力）：210万×60%=126万<br>取整：120万-150万（含旺季临时用工）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">筛选条件</p>
+                                        <p>日均工作≥10小时（常态），旺季14-16小时<br>每周工作6天，单休/无休<br>高强度体力：日均行走2-3万步、弯腰3000+次、负重10-40kg<br>岗位：快递分拣中心、电商仓、生鲜冷链仓、大件仓一线</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 医疗急救卡片 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3">医疗急救</h5>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">场景备注</p>
+                                        <p>-</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">核心功能匹配</p>
+                                        <p>若为急救/手术场景，患者和医护均处于高压状态，心率监测是生命支持的关键</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性依据</p>
+                                        <p>过劳猝死：全国每年心源性猝死约54-55万，医护群体占职业猝死的28%，即约15万+，其中30-50岁一线医护占74%</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性</p>
+                                        <p>*****（必需）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">市场容量</p>
+                                        <p>连续手术/夜班的一线主力：约150万（高价值刚需人群）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">筛选条件</p>
+                                        <p>连续手术/夜班（每周>50小时、每日>10小时、频繁夜班）<br>一线主力（主治医师/住院医/责任护士）</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 工业巡检/维修卡片 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3">工业巡检/维修</h5>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">场景备注</p>
+                                        <p>（高危场景，如高空、高温、密闭空间）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">核心功能匹配</p>
+                                        <p>实时监测生命体征，心率监测是强需求，因为任何生命体征异常都可能直接导致安全事故</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性依据</p>
+                                        <p>2024年机械行业生产安全事故312起、死亡300人，其中检维修作业环节事故占比超22%（70起、69人死亡）；化工行业全年事故113起、死亡144人，多发生在巡检/检修环节</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性</p>
+                                        <p>****（有必要）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">市场容量</p>
+                                        <p>高强度筛选（日均≥10小时、高危/重体力）：350万×60%=210万<br>取整：180万-220万（含外包/临时用工）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">筛选条件</p>
+                                        <p>工作时长：日均≥10小时，旺季/抢修12-16小时；单休/无休、24小时待命<br>劳动强度：负重10-50kg、高空/井下/密闭空间、高温/低温/粉尘/有毒环境<br>岗位：设备巡检、电气维修、机械维修、仪表检修、管道巡线、锅炉/压力容器检修、风电/光伏运维、煤矿/矿山检修、化工/石化巡检、电力/电网检修、轨道交通维保</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 长途客运卡片 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3">长途客运</h5>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">场景备注</p>
+                                        <p>长途客运（班车/包车/旅游）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">核心功能匹配</p>
+                                        <p>实时监测生命体征，预警疲劳驾驶，降低事故风险</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性依据</p>
+                                        <p>90%+有颈肩腰劳损，80%睡眠障碍，60%+高血压/心血管风险，这些问题是急性事件的重要诱因<br>长途客运司机因疲劳驾驶、心脑血管疾病突发导致的事故死亡，每年可达数千人</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">必要性</p>
+                                        <p>****（有必要）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">市场容量</p>
+                                        <p>高强度筛选（日均≥10小时、跨省/夜间/重责任）：80万×65%=52万<br>取整：45万-55万（含临时/替班）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">筛选条件</p>
+                                        <p>工作时长：日均≥10小时，跨省长线12-16小时；单休/无休、24小时待命<br>劳动强度：久坐10+小时、精神高度集中、夜间/山区/恶劣天气、安全责任重大<br>岗位：跨省长途班车、省际包车、旅游大巴、超长线路接驳司机</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 折叠面板2：高强度、高压、容易猝死的职场人群 -->
+                    <div class="w-full">
+                        <h4 class="font-semibold text-gray-700 mb-4">高强度、高压、容易猝死的职场人群</h4>
+                        <div class="grid grid-cols-1 gap-4">
+                            <!-- 程序员/互联网大厂夜班运维卡片 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3">程序员/互联网大厂夜班运维</h5>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">风险</p>
+                                        <p class="text-red-600 font-semibold">熬夜、久坐、高压、猝死高发</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">需要的功能</p>
+                                        <p>心率、压力、疲劳、睡眠</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">市场容量</p>
+                                        <p class="text-green-600 font-semibold">300万+</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 安保/押运/特勤卡片 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3">安保/押运/特勤</h5>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">风险</p>
+                                        <p class="text-red-600 font-semibold">长期站立、熬夜、突发心脑血管事件</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">需要的功能</p>
+                                        <p>心率、压力、疲劳、睡眠</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">市场容量</p>
+                                        <p class="text-green-600 font-semibold">600万+</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 民航飞行员/乘务员卡片 -->
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <h5 class="font-semibold text-gray-700 mb-3">民航飞行员/乘务员</h5>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">风险</p>
+                                        <p class="text-red-600 font-semibold">高空、时差、高强度、心血管要求极高</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">需要的功能</p>
+                                        <p>精准心率、血氧、疲劳监测</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700 mb-1">市场容量</p>
+                                        <p class="text-green-600 font-semibold">10万+</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 人群卡片展开/折叠交互
+        document.querySelectorAll('.persona-card').forEach(card => {
+            const chevron = card.querySelector('.chevron-icon');
+            const details = card.querySelector('.persona-details');
+            card.addEventListener('click', () => {
+                chevron.classList.toggle('active');
+                details.classList.toggle('active');
+            });
+        });
+
+        // 核心人群优先级图表
+        const ctx = document.getElementById('personaPriorityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    '专业/进阶耐力运动爱好者',
+                    '大众户外运动爱好者',
+                    '中老年健康运动人群',
+                    '军警及应急救援人员',
+                    '企业高管及职场精英',
+                    '慢性病管理人群'
+                ],
+                datasets: [{
+                    label: '优先级评分（满分5星）',
+                    data: [5, 4.5, 4.5, 4.5, 3.5, 3.5],
+                    backgroundColor: [
+                        '#EF4444',
+                        '#F97316',
+                        '#14B8A6',
+                        '#3B82F6',
+                        '#8B5CF6',
+                        '#10B981'
+                    ],
+                    borderRadius: 8,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            stepSize: 0.5,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#F3F4F6'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#111827',
+                        padding: 12,
+                        borderRadius: 8,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+    </div>
+
+    <script>
+        // 人群卡片展开/折叠交互
+        document.querySelectorAll('.persona-card').forEach(card => {
+            const chevron = card.querySelector('.chevron-icon');
+            const details = card.querySelector('.persona-details');
+            card.addEventListener('click', () => {
+                chevron.classList.toggle('active');
+                details.classList.toggle('active');
+            });
+        });
+
+        // 核心人群优先级图表
+        const ctx = document.getElementById('personaPriorityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    '专业/进阶耐力运动爱好者',
+                    '大众户外运动爱好者',
+                    '中老年健康运动人群',
+                    '军警及应急救援人员',
+                    '企业高管及职场精英',
+                    '慢性病管理人群'
+                ],
+                datasets: [{
+                    label: '优先级评分（满分5星）',
+                    data: [5, 4.5, 4.5, 4.5, 3.5, 3.5],
+                    backgroundColor: [
+                        '#EF4444',
+                        '#F97316',
+                        '#14B8A6',
+                        '#3B82F6',
+                        '#8B5CF6',
+                        '#10B981'
+                    ],
+                    borderRadius: 8,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            stepSize: 0.5,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#F3F4F6'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#111827',
+                        padding: 12,
+                        borderRadius: 8,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
